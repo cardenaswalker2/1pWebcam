@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ipwebcam-vision-inspection"
+version = "0.1.0"
+description = "Sistema de visión artificial industrial para inspección de láminas con IP Webcam"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Ingeniería de Software e Inspección" }
+]
+dependencies = [
+    "opencv-python>=4.8.0",
+    "numpy>=1.24.0",
+    "PySide6>=6.6.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-qt>=4.2.0",
+]
+yolo = [
+    "ultralytics>=8.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v"

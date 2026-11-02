@@ -1,0 +1,41 @@
+# Entorno virtual y dependencias
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+env/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs y bases de datos locales temporales
+*.log
+logs/
+*.sqlite3-journal
+*.db
+*.sqlite3
+
+# Archivos pesados, zips y datasets generados
+dataset.zip
+runs/
+2026-10-30/
+data/dataset/
+data/dataset_yolo/
+data/evidence/*
+!data/evidence/.gitkeep
+
+# Reportes y capturas locales temporales
+Informe_Calidad_*.html
+evidencia_informe_*.png
+
+# Pesos de modelos grandes opcionales (descomentar si no se quieren en el repo)
+# yolov8n.pt
+
+# IDEs y sistemas operativos
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
