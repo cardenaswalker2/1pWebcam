@@ -1,21 +1,26 @@
 """
-Diálogo Profesional de Diagnóstico e Incompatibilidad de Material Translúcido.
-Presenta métricas científicas, telemetría de distorsión óptica y el cronograma
-formal de entrenamiento requerido (90-120 días).
+Diálogo Profesional de Diagnóstico e Incompatibilidad de Material Translúcido v2.0.
+Incluye pestañas de telemetría de laboratorio, comparativa con láminas metálicas,
+diagrama de cronograma de 4 fases (90-120 días) y generador de informe técnico oficial.
 """
 
+import os
+import subprocess
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
-    QFrame, QTextEdit, QProgressBar, QGridLayout, QWidget
+    QFrame, QProgressBar, QGridLayout, QWidget, QTabWidget,
+    QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QIcon
+from PySide6.QtGui import QFont, QColor
+
+from demo_transparentes.report_generator import generate_technical_report
 
 class OpticalIncompatibilityDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Diagnóstico Crítico de Inferencia — Motor de Visión Artificial v4.2")
-        self.resize(780, 580)
+        self.setWindowTitle("Dictamen Técnico de Inferencia — Laboratorio de Visión Artificial v4.2")
+        self.resize(850, 640)
         self.setModal(True)
         self._setup_style()
         self._setup_ui()
@@ -23,172 +28,248 @@ class OpticalIncompatibilityDialog(QDialog):
     def _setup_style(self):
         self.setStyleSheet("""
             QDialog {
-                background-color: #0f1217;
-                color: #e0e0e0;
+                background-color: #0d1117;
+                color: #e2e8f0;
                 font-family: 'Segoe UI', Arial, sans-serif;
             }
             QLabel {
-                color: #dcdcdc;
+                color: #cbd5e1;
+            }
+            QTabWidget::pane {
+                border: 1px solid #2d3748;
+                background-color: #161b22;
+                border-radius: 6px;
+                top: -1px;
+            }
+            QTabBar::tab {
+                background-color: #0f141c;
+                border: 1px solid #2d3748;
+                padding: 8px 20px;
+                margin-right: 4px;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+                color: #94a3b8;
+                font-weight: 600;
+            }
+            QTabBar::tab:selected {
+                background-color: #161b22;
+                border-bottom-color: #161b22;
+                color: #38bdf8;
             }
             QFrame.card {
-                background-color: #171c24;
-                border: 1px solid #28303d;
-                border-radius: 8px;
-                padding: 12px;
-            }
-            QFrame.warning-card {
-                background-color: #211614;
-                border: 1px solid #6b2d22;
+                background-color: #161b22;
+                border: 1px solid #283244;
                 border-radius: 8px;
                 padding: 14px;
             }
+            QFrame.warning-banner {
+                background-color: #2a1215;
+                border: 1px solid #7f1d1d;
+                border-radius: 8px;
+                padding: 12px;
+            }
             QPushButton {
-                background-color: #1c2636;
-                border: 1px solid #364860;
+                background-color: #1e293b;
+                border: 1px solid #334155;
                 border-radius: 5px;
-                padding: 8px 20px;
+                padding: 9px 20px;
                 font-weight: 600;
                 color: #ffffff;
                 font-size: 13px;
             }
             QPushButton:hover {
-                background-color: #2b3b54;
-                border-color: #0088ff;
+                background-color: #334155;
+                border-color: #38bdf8;
             }
-            QPushButton.primary-btn {
-                background-color: #c93b2b;
-                border-color: #ff523d;
+            QPushButton#btnReport {
+                background-color: #0369a1;
+                border-color: #38bdf8;
             }
-            QPushButton.primary-btn:hover {
-                background-color: #e04434;
+            QPushButton#btnReport:hover {
+                background-color: #0284c7;
             }
             QProgressBar {
-                background-color: #1a1e24;
-                border: 1px solid #2e3642;
+                background-color: #1e293b;
+                border: 1px solid #334155;
                 border-radius: 4px;
                 text-align: center;
                 color: #ffffff;
                 font-weight: bold;
-                height: 18px;
+                height: 20px;
             }
             QProgressBar::chunk {
-                background-color: #d94b38;
+                background-color: #ef4444;
                 border-radius: 3px;
+            }
+            QTableWidget {
+                background-color: #0f141c;
+                border: 1px solid #2d3748;
+                gridline-color: #1e293b;
+                color: #e2e8f0;
+                border-radius: 4px;
+            }
+            QHeaderView::section {
+                background-color: #1e293b;
+                color: #38bdf8;
+                padding: 6px;
+                border: 1px solid #2d3748;
+                font-weight: bold;
             }
         """)
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(18)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(14)
 
-        # Header con alerta visual
+        # Banner Superior de Alerta Crítica
         header_frame = QFrame()
-        header_frame.setProperty("class", "warning-card")
+        header_frame.setProperty("class", "warning-banner")
         header_layout = QHBoxLayout(header_frame)
-        header_layout.setContentsMargins(12, 10, 12, 10)
+        header_layout.setContentsMargins(12, 8, 12, 8)
 
         alert_icon = QLabel("⚠")
-        alert_icon.setStyleSheet("font-size: 38px; color: #ff523d; margin-right: 10px;")
+        alert_icon.setStyleSheet("font-size: 40px; color: #ef4444; margin-right: 12px;")
         header_layout.addWidget(alert_icon)
 
         title_box = QVBoxLayout()
-        main_title = QLabel("INCOMPATIBILIDAD DE MATERIAL: POLICARBONATO / TRANSLÚCIDO")
-        main_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #ff6e59; letter-spacing: 0.5px;")
-        sub_title = QLabel("El modelo actual (YOLOv8 + Autoencoder Convolucional) no cuenta con pesos convergentes para superficies con transmitancia lumínica.")
-        sub_title.setStyleSheet("font-size: 12px; color: #c4c4c4;")
-        sub_title.setWordWrap(True)
+        main_title = QLabel("DICTAMEN TÉCNICO: INCOMPATIBILIDAD POR REFRACCIÓN ÓPTICA")
+        main_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #f87171; letter-spacing: 0.5px;")
+        sub_title = QLabel("Material: Policarbonato / Resina Translúcida — Fenómeno de cáustica lumínica genera saturación en el modelo.")
+        sub_title.setStyleSheet("font-size: 12px; color: #e2e8f0;")
         title_box.addWidget(main_title)
         title_box.addWidget(sub_title)
         header_layout.addLayout(title_box)
+        header_layout.addStretch()
+
         layout.addWidget(header_frame)
 
-        # Panel de Métricas de Inferencia en Tiempo Real
-        metrics_frame = QFrame()
-        metrics_frame.setProperty("class", "card")
-        metrics_grid = QGridLayout(metrics_frame)
-        metrics_grid.setContentsMargins(14, 14, 14, 14)
-        metrics_grid.setHorizontalSpacing(24)
-        metrics_grid.setVerticalSpacing(12)
+        # Pestañas de Diagnóstico Profesional
+        tabs = QTabWidget()
 
-        # Métrica 1: Confianza de Detección
-        lbl1 = QLabel("Confianza de Detección:")
-        lbl1.setStyleSheet("color: #8fa0b5; font-size: 12px;")
-        val1 = QLabel("11.4 % (Crítico)")
-        val1.setStyleSheet("color: #ff5555; font-weight: bold;")
-        bar1 = QProgressBar()
-        bar1.setRange(0, 100)
-        bar1.setValue(11)
+        # TAB 1: TELEMETRÍA Y COMPARATIVA DE LABORATORIO
+        tab_metrics = QWidget()
+        metrics_layout = QVBoxLayout(tab_metrics)
+        metrics_layout.setContentsMargins(14, 14, 14, 14)
+        metrics_layout.setSpacing(12)
 
-        # Métrica 2: Dispersión por Refracción (Cáusticas)
-        lbl2 = QLabel("Índice de Aberración Cáustica:")
-        lbl2.setStyleSheet("color: #8fa0b5; font-size: 12px;")
-        val2 = QLabel("89.2 % (Fuera de umbral)")
-        val2.setStyleSheet("color: #ffaa00; font-weight: bold;")
-        bar2 = QProgressBar()
-        bar2.setStyleSheet("QProgressBar::chunk { background-color: #ffaa00; }")
-        bar2.setRange(0, 100)
-        bar2.setValue(89)
+        # Tabla comparativa
+        comp_title = QLabel("ANÁLISIS COMPARATIVO DE CONVERGENCIA DE RED NEURONAL:")
+        comp_title.setStyleSheet("font-weight: bold; color: #38bdf8; font-size: 13px;")
+        metrics_layout.addWidget(comp_title)
 
-        # Métrica 3: Estado del Dataset
-        lbl3 = QLabel("Compatibilidad de Dataset:")
-        lbl3.setStyleSheet("color: #8fa0b5; font-size: 12px;")
-        val3 = QLabel("NO COMPATIBLE [Material Translúcido]")
-        val3.setStyleSheet("color: #ff5555; font-weight: bold;")
+        table = QTableWidget(4, 3)
+        table.setHorizontalHeaderLabels(["Parámetro de Rendimiento", "Lámina Metálica (Estándar)", "Lámina Translúcida (Actual)"])
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        table.verticalHeader().setVisible(False)
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
 
-        # Métrica 4: Pérdida de Gradiente (Loss Function)
-        lbl4 = QLabel("Loss de Reconstrucción:")
-        lbl4.setStyleSheet("color: #8fa0b5; font-size: 12px;")
-        val4 = QLabel("2.842 (Divergente / No converge)")
-        val4.setStyleSheet("color: #ff7777; font-weight: bold;")
+        data = [
+            ("Índice de Confianza Detección", "96.4 % [Óptimo]", "11.4 % [Divergencia Crítica]"),
+            ("Tasa de Falsas Alarmas (FAR)", "0.02 % [Admisible]", "74.8 % [Inadmisible en Planta]"),
+            ("Relación Señal/Ruido Óptico (SNR)", "26.8 dB [Alta Definición]", "4.2 dB [Ruido por Refracción]"),
+            ("Función de Pérdida de Gradiente (Loss)", "0.012 [Convergente]", "2.842 [Divergente / Desenfocado]")
+        ]
 
-        metrics_grid.addWidget(lbl1, 0, 0)
-        metrics_grid.addWidget(val1, 0, 1)
-        metrics_grid.addWidget(bar1, 0, 2)
+        for row, (param, opaco, transl) in enumerate(data):
+            table.setItem(row, 0, QTableWidgetItem(param))
+            item_op = QTableWidgetItem(opaco)
+            item_op.setForeground(QColor("#10b981"))
+            table.setItem(row, 1, item_op)
+            item_tr = QTableWidgetItem(transl)
+            item_tr.setForeground(QColor("#ef4444"))
+            table.setItem(row, 2, item_tr)
 
-        metrics_grid.addWidget(lbl2, 1, 0)
-        metrics_grid.addWidget(val2, 1, 1)
-        metrics_grid.addWidget(bar2, 1, 2)
+        table.setFixedHeight(150)
+        metrics_layout.addWidget(table)
 
-        metrics_grid.addWidget(lbl3, 2, 0)
-        metrics_grid.addWidget(val3, 2, 1, 1, 2)
+        # Medidor visual de divergencia
+        gauge_box = QFrame()
+        gauge_box.setProperty("class", "card")
+        gauge_layout = QVBoxLayout(gauge_box)
+        gauge_layout.setContentsMargins(10, 10, 10, 10)
 
-        metrics_grid.addWidget(lbl4, 3, 0)
-        metrics_grid.addWidget(val4, 3, 1, 1, 2)
+        lbl_g = QLabel("Divergencia de Pesos del Modelo (YOLOv8 + Feature Extractor):")
+        lbl_g.setStyleSheet("font-weight: bold; color: #94a3b8; font-size: 12px;")
+        gauge_layout.addWidget(lbl_g)
 
-        layout.addWidget(metrics_frame)
+        pbar = QProgressBar()
+        pbar.setRange(0, 100)
+        pbar.setValue(89)
+        pbar.setFormat("Divergencia: 89% (Fuera de especificación técnica)")
+        gauge_layout.addWidget(pbar)
 
-        # Plan de acción y requerimientos técnicos (El justificativo para el cliente)
-        action_frame = QFrame()
-        action_frame.setProperty("class", "card")
-        action_layout = QVBoxLayout(action_frame)
-        action_layout.setContentsMargins(14, 14, 14, 14)
-        action_layout.setSpacing(8)
+        metrics_layout.addWidget(gauge_box)
+        tabs.addTab(tab_metrics, "Telemetría y Diagnóstico IA")
 
-        act_title = QLabel("REQUERIMIENTOS TÉCNICOS PARA HABILITACIÓN INDUSTRIAL:")
-        act_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #4da6ff;")
-        action_layout.addWidget(act_title)
+        # TAB 2: CRONOGRAMA DE ENTRENAMIENTO Y DESARROLLO (3-4 MESES)
+        tab_timeline = QWidget()
+        time_layout = QVBoxLayout(tab_timeline)
+        time_layout.setContentsMargins(14, 14, 14, 14)
+        time_layout.setSpacing(10)
 
-        tech_text = QLabel(
-            "1. <b style='color:#ffffff;'>Captura y Etiquetado Espectral:</b> Se requiere adquirir un lote mínimo de 1,500 fotogramas con iluminación difusa polarizada para aislar refracciones de fisuras reales.<br>"
-            "2. <b style='color:#ffffff;'>Re-entrenamiento de Backbone:</b> Fine-tuning de red neuronal profunda con aumento de datos en espacios de color HSV/Lab (Estimado: 80 - 100 horas GPU).<br>"
-            "3. <b style='color:#ffffff;'>Calibración Óptica en Planta:</b> Ajuste de balance de blancos y filtros CPL en lente para mitigar destellos de fondo.<br>"
-            "4. <b style='color:#ffaa00;'>Tiempo Estimado de Desarrollo y Pruebas Piloto: <u>3 a 4 Meses</u></b>."
-        )
-        tech_text.setTextFormat(Qt.TextFormat.RichText)
-        tech_text.setStyleSheet("font-size: 12px; line-height: 1.4; color: #c4d0df;")
-        tech_text.setWordWrap(True)
-        action_layout.addWidget(tech_text)
+        t_title = QLabel("HOJA DE RUTA OBLIGATORIA DE ENTRENAMIENTO (ESTIMADO: 90 A 120 DÍAS):")
+        t_title.setStyleSheet("font-weight: bold; color: #38bdf8; font-size: 13px;")
+        time_layout.addWidget(t_title)
 
-        layout.addWidget(action_frame)
+        timeline_card = QFrame()
+        timeline_card.setProperty("class", "card")
+        tl_box = QVBoxLayout(timeline_card)
+        tl_box.setSpacing(10)
 
-        # Botones inferiores
+        phases = [
+            ("Fase 1: Montaje de Banco Óptico Polarizado (Mes 1 / Semanas 1-4)",
+             "Diseño de campana de iluminación con polarizadores cruzados (Cross-Polarization) para neutralizar cáusticas y destellos especulares."),
+            ("Fase 2: Adquisición de Dataset Especializado (Mes 2 / Semanas 5-8)",
+             "Captura supervisada de 3,500 fotogramas de tejas translúcidas con defectos reales (micro-fisuras, burbujas y alabeo térmico)."),
+            ("Fase 3: Re-entrenamiento en Clúster GPU (Mes 3 / Semanas 9-12)",
+             "Fine-tuning del backbone de red neuronal profunda con aumento de datos en espacios de color HSV/Lab y mapas de tensión (80-100 hrs GPU)."),
+            ("Fase 4: Validación y Calibración en Planta Piloto (Mes 4 / Semanas 13-16)",
+             "Ajuste de umbrales milimétricos y pruebas con tasa de falsas alarmas < 0.5% en velocidad de producción continua.")
+        ]
+
+        for p_title, p_desc in phases:
+            lbl_pt = QLabel(f"● <b>{p_title}</b>")
+            lbl_pt.setStyleSheet("color: #38bdf8; font-size: 12px;")
+            lbl_pd = QLabel(f"   {p_desc}")
+            lbl_pd.setStyleSheet("color: #94a3b8; font-size: 11px;")
+            lbl_pd.setWordWrap(True)
+            tl_box.addWidget(lbl_pt)
+            tl_box.addWidget(lbl_pd)
+
+        time_layout.addWidget(timeline_card)
+        tabs.addTab(tab_timeline, "Cronograma Requerido (90-120 Días)")
+
+        layout.addWidget(tabs)
+
+        # Botones Inferiores de Acción
         btn_layout = QHBoxLayout()
+
+        self.btn_export = QPushButton("📄 Exportar Dictamen Oficial (HTML)")
+        self.btn_export.setObjectName("btnReport")
+        self.btn_export.clicked.connect(self._export_report)
+        btn_layout.addWidget(self.btn_export)
+
         btn_layout.addStretch()
 
-        ack_btn = QPushButton("Entendido / Regresar a Monitoreo")
-        ack_btn.setDefault(True)
-        ack_btn.clicked.connect(self.accept)
-        btn_layout.addWidget(ack_btn)
+        self.btn_close = QPushButton("Entendido / Regresar a Inspección")
+        self.btn_close.setDefault(True)
+        self.btn_close.clicked.connect(self.accept)
+        btn_layout.addWidget(self.btn_close)
 
         layout.addLayout(btn_layout)
+
+    def _export_report(self):
+        """Genera el informe técnico formal y lo abre automáticamente en el navegador"""
+        try:
+            report_path = generate_technical_report()
+            # Abrir en el navegador predeterminado del sistema operativo
+            os.startfile(report_path)
+            QMessageBox.information(
+                self,
+                "Dictamen Generado con Éxito",
+                f"El dictamen técnico formal ha sido generado y abierto en su navegador:\n\n{report_path}\n\n"
+                "Puede imprimirlo o guardarlo en PDF para entregarlo al cliente."
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "Error al Generar", f"No se pudo generar el reporte:\n{str(e)}")

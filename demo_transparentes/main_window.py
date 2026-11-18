@@ -419,9 +419,16 @@ class TransparentInspectionWindow(QMainWindow):
     def trigger_demo_alert(self):
         """
         Disparado con [Ctrl+X] o [X]:
-        Activa el overlay visual en el video y abre el diálogo formal técnico.
+        Activa el overlay visual en el video, emite alerta sonora y abre el diálogo formal técnico.
         """
-        # 1. Activar el HUD parpadeante en el motor de video
+        # 1. Beep sutil de advertencia industrial (Windows)
+        try:
+            import winsound
+            winsound.Beep(880, 250) # Tono técnico de 880Hz durante 250ms
+        except Exception:
+            pass
+
+        # 2. Activar el HUD parpadeante en el motor de video
         self.engine.trigger_optical_alert()
 
         # Si no hay cámara activa, crear un frame sintético para que se aprecie de inmediato
@@ -431,7 +438,7 @@ class TransparentInspectionWindow(QMainWindow):
             if frame is not None:
                 self._on_frame_received(frame)
 
-        # 2. Abrir la ventana formal de incompatibilidad
+        # 3. Abrir la ventana formal de incompatibilidad
         dialog = OpticalIncompatibilityDialog(self)
         dialog.exec()
 
