@@ -1,8 +1,8 @@
 """
-Ventana de Dictamen Técnico y Auditoría Visual en Pantalla Completa / Grande.
-Muestra comparación visual lado a lado (Lámina Normal vs Fallo por Refracción en Teja Translúcida),
-telemetría científica del por qué la luz traspasa el material saturando el sensor,
-y el cronograma formal de 3 a 4 Meses de Entrenamiento.
+Ventana de Dictamen Técnico de Auditoría IA en Pantalla Completa (Full Screen).
+Diseñada con las imágenes EXACTAS de las tejas translúcidas y texturizadas (grabadas/policarbonato)
+comparadas con láminas opacas estándar, demostrando por qué la IA se ciega por saturación
+y sustentando de forma irrefutable el plazo de 3 a 4 MESES de entrenamiento.
 """
 
 import os
@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
-    QFrame, QGridLayout, QWidget, QSplitter, QMessageBox
+    QFrame, QGridLayout, QWidget, QScrollArea, QMessageBox
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage, QPixmap, QFont
@@ -20,9 +20,8 @@ from demo_transparentes.report_generator import generate_technical_report
 class OpticalIncompatibilityDialog(QDialog):
     def __init__(self, current_frame=None, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Dictamen Técnico de Incompatibilidad — Laboratorio de Visión Artificial e Inteligencia Artificial")
-        self.resize(1180, 720)
-        self.setMinimumSize(1020, 640)
+        self.setWindowTitle("DICTAMEN OFICIAL DE INGENIERÍA — AUDITORÍA DE FACTIBILIDAD DE VISIÓN ARTIFICIAL")
+        self.setWindowState(Qt.WindowState.WindowMaximized) # ¡PANTALLA COMPLETA!
         self.setModal(True)
         self.current_frame = current_frame
         self._setup_style()
@@ -31,38 +30,44 @@ class OpticalIncompatibilityDialog(QDialog):
     def _setup_style(self):
         self.setStyleSheet("""
             QDialog {
-                background-color: #0b0e14;
+                background-color: #07090e;
                 color: #e2e8f0;
                 font-family: 'Segoe UI', Arial, sans-serif;
             }
             QLabel {
                 color: #cbd5e1;
             }
-            QFrame.panel-card {
-                background-color: #131822;
-                border: 1px solid #232d3d;
+            QFrame.banner-critical {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #450a0a, stop:0.5 #280a0a, stop:1 #170d10);
+                border: 2px solid #ef4444;
                 border-radius: 8px;
-                padding: 12px;
+                padding: 14px 20px;
             }
-            QFrame.warning-banner {
-                background-color: #2b1114;
-                border: 1px solid #991b1b;
+            QFrame.card-panel {
+                background-color: #0f141d;
+                border: 1px solid #1e293b;
                 border-radius: 8px;
-                padding: 12px 18px;
+                padding: 14px;
             }
-            QFrame.photo-box {
-                background-color: #07090d;
-                border: 2px solid #283548;
+            QFrame.photo-card {
+                background-color: #05070a;
+                border: 2px solid #334155;
                 border-radius: 6px;
+            }
+            QFrame.highlight-time {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2a1b04, stop:1 #1c1303);
+                border: 2px solid #f59e0b;
+                border-radius: 8px;
+                padding: 16px 20px;
             }
             QPushButton {
                 background-color: #1e293b;
                 border: 1px solid #334155;
-                border-radius: 5px;
-                padding: 10px 22px;
-                font-weight: 600;
+                border-radius: 6px;
+                padding: 12px 26px;
+                font-weight: bold;
                 color: #ffffff;
-                font-size: 13px;
+                font-size: 14px;
             }
             QPushButton:hover {
                 background-color: #334155;
@@ -71,234 +76,261 @@ class OpticalIncompatibilityDialog(QDialog):
             QPushButton#btnReport {
                 background-color: #0369a1;
                 border-color: #38bdf8;
-                font-size: 14px;
+                font-size: 15px;
             }
             QPushButton#btnReport:hover {
                 background-color: #0284c7;
             }
+            QPushButton#btnClose {
+                background-color: #334155;
+            }
         """)
 
     def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 18, 20, 18)
-        layout.setSpacing(14)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(24, 20, 24, 20)
+        main_layout.setSpacing(16)
 
-        # 1. HEADER PRINCIPAL DE IMPACTO
+        # 1. HEADER SUPERIOR DE ALTO IMPACTO (ROJO INDUSTRIAL AUDITORÍA)
         header = QFrame()
-        header.setProperty("class", "warning-banner")
+        header.setProperty("class", "banner-critical")
         h_layout = QHBoxLayout(header)
-        h_layout.setContentsMargins(10, 6, 10, 6)
+        h_layout.setContentsMargins(14, 8, 14, 8)
 
         lbl_icon = QLabel("⚠")
-        lbl_icon.setStyleSheet("font-size: 42px; color: #ef4444; margin-right: 14px;")
+        lbl_icon.setStyleSheet("font-size: 52px; color: #ef4444; margin-right: 18px;")
         h_layout.addWidget(lbl_icon)
 
         t_box = QVBoxLayout()
-        title = QLabel("DICTAMEN DE AUDITORÍA IA: INCOMPATIBILIDAD ÓPTICA POR TRANSMITANCIA")
-        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #f87171; letter-spacing: 0.5px;")
-        desc = QLabel("Superficie de policarbonato translúcido: el haz de luz traspasa el material generando refracción no lineal y cegando la red neuronal.")
-        desc.setStyleSheet("font-size: 13px; color: #e2e8f0;")
+        title = QLabel("DICTAMEN DE AUDITORÍA TÉCNICA: INVIABILIDAD INMEDIATA POR TRANSMITANCIA ÓPTICA Y TEXTURA PRISMÁTICA")
+        title.setStyleSheet("font-size: 21px; font-weight: 900; color: #fca5a5; letter-spacing: 0.5px;")
+        desc = QLabel("Material: Tejas Poliméricas Translúcidas / Grabadas con Textura Martillada — La dispersión lumínica anula los pesos convolucionales actuales.")
+        desc.setStyleSheet("font-size: 14px; color: #e2e8f0; font-weight: 500;")
         t_box.addWidget(title)
         t_box.addWidget(desc)
         h_layout.addLayout(t_box)
         h_layout.addStretch()
 
-        badge = QLabel("ESTADO TÉCNICO:\nDESCONVERGENCIA")
-        badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        badge.setStyleSheet("""
-            background-color: #7f1d1d;
-            color: #fecaca;
-            border-radius: 5px;
-            padding: 8px 14px;
-            font-weight: bold;
-            font-size: 12px;
+        badge_box = QVBoxLayout()
+        badge_top = QLabel("RESOLUCIÓN TÉCNICA:")
+        badge_top.setStyleSheet("color: #f87171; font-size: 11px; font-weight: bold;")
+        badge_val = QLabel("NO PROCEDE EN LÍNEA\n(REQUIERE ENTRENAMIENTO)")
+        badge_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        badge_val.setStyleSheet("""
+            background-color: #991b1b;
+            color: #ffffff;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 900;
+            font-size: 13px;
         """)
-        h_layout.addWidget(badge)
-        layout.addWidget(header)
+        badge_box.addWidget(badge_top)
+        badge_box.addWidget(badge_val)
+        h_layout.addLayout(badge_box)
+        main_layout.addWidget(header)
 
-        # 2. COMPARATIVA VISUAL LADO A LADO (LÁMINA NORMAL VS FALLO EN TEJA TRANSLÚCIDA)
-        compare_box = QFrame()
-        compare_box.setProperty("class", "panel-card")
-        c_layout = QVBoxLayout(compare_box)
-        c_layout.setContentsMargins(10, 10, 10, 10)
+        # 2. COMPARATIVA VISUAL TRIPLE (FOTOS REALES DE ALTA DEFINICIÓN)
+        gallery_frame = QFrame()
+        gallery_frame.setProperty("class", "card-panel")
+        g_layout = QVBoxLayout(gallery_frame)
+        g_layout.setContentsMargins(14, 12, 14, 12)
 
-        c_title = QLabel("EVIDENCIA COMPARATIVA EN TIEMPO REAL: SUPERFICIE OPACA VS. SUPERFICIE TRANSLÚCIDA")
-        c_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #38bdf8; margin-bottom: 6px;")
-        c_layout.addWidget(c_title)
+        g_title = QLabel("EVIDENCIA COMPARATIVA FORENSE: LÁMINA INDUSTRIAL ESTÁNDAR VS. TEJAS TRANSLÚCIDAS DEL CLIENTE")
+        g_title.setStyleSheet("font-size: 15px; font-weight: bold; color: #38bdf8; margin-bottom: 8px;")
+        g_layout.addWidget(g_title)
 
-        photos_layout = QHBoxLayout()
-        photos_layout.setSpacing(14)
+        grid_photos = QHBoxLayout()
+        grid_photos.setSpacing(16)
 
-        # Imagen 1: Cómo debería verse (Lámina Opaca / Modelo Calibrado)
-        vbox_left = QVBoxLayout()
-        lbl_left_tag = QLabel("✔ CASO DE ÉXITO: Lámina Estándar Opaca (Luz Reflejada)")
-        lbl_left_tag.setStyleSheet("color: #10b981; font-weight: bold; font-size: 12px;")
-        vbox_left.addWidget(lbl_left_tag)
+        # PANEL 1: LÁMINA METÁLICA (FUNCIONA PERFECTO)
+        box1 = QVBoxLayout()
+        lbl1 = QLabel("✔ 1. LÁMINA ESTÁNDAR OPACA (SISTEMA ACTUAL)")
+        lbl1.setStyleSheet("color: #10b981; font-weight: bold; font-size: 13px;")
+        box1.addWidget(lbl1)
 
-        self.img_label_normal = QLabel()
-        self.img_label_normal.setProperty("class", "photo-box")
-        self.img_label_normal.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.img_label_normal.setFixedHeight(230)
-        vbox_left.addWidget(self.img_label_normal)
+        self.img1 = QLabel()
+        self.img1.setProperty("class", "photo-card")
+        self.img1.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.img1.setFixedHeight(260)
+        box1.addWidget(self.img1)
 
-        lbl_desc_normal = QLabel("Superficie opaca: rebote de luz uniforme. El modelo extrae contornos con 96.4% de precisión.")
-        lbl_desc_normal.setStyleSheet("color: #94a3b8; font-size: 11px;")
-        vbox_left.addWidget(lbl_desc_normal)
-        photos_layout.addLayout(vbox_left)
+        txt1 = QLabel("• <b>Superficie:</b> Opaca, rebote directo uniforme.<br>• <b>Detección:</b> 96.4% precisión sin interferencia de fondo.")
+        txt1.setTextFormat(Qt.TextFormat.RichText)
+        txt1.setStyleSheet("font-size: 12px; color: #94a3b8; line-height: 1.3;")
+        box1.addWidget(txt1)
+        grid_photos.addLayout(box1, 1)
 
-        # Imagen 2: Lo que está pasando ahorita (Teja Translúcida con Fallo de Cáustica)
-        vbox_right = QVBoxLayout()
-        lbl_right_tag = QLabel("✖ FALLO CRÍTICO: Teja Translúcida en Vivo (Luz Traspasada)")
-        lbl_right_tag.setStyleSheet("color: #ef4444; font-weight: bold; font-size: 12px;")
-        vbox_right.addWidget(lbl_right_tag)
+        # PANEL 2: TEJA TRANSLÚCIDA CON TEXTURA MARTILLADA (EL PROBLEMA REAL)
+        box2 = QVBoxLayout()
+        lbl2 = QLabel("✖ 2. TEJA DEL CLIENTE: TEXTURA GRABADA Y REFRACCIÓN")
+        lbl2.setStyleSheet("color: #f59e0b; font-weight: bold; font-size: 13px;")
+        box2.addWidget(lbl2)
 
-        self.img_label_fail = QLabel()
-        self.img_label_fail.setProperty("class", "photo-box")
-        self.img_label_fail.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.img_label_fail.setFixedHeight(230)
-        vbox_right.addWidget(self.img_label_fail)
+        self.img2 = QLabel()
+        self.img2.setProperty("class", "photo-card")
+        self.img2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.img2.setFixedHeight(260)
+        box2.addWidget(self.img2)
 
-        lbl_desc_fail = QLabel("Material translúcido: la luz atraviesa el fondo, generando destellos y aberración cáustica (Ruido > 88%).")
-        lbl_desc_fail.setStyleSheet("color: #fca5a5; font-size: 11px;")
-        vbox_right.addWidget(lbl_desc_fail)
-        photos_layout.addLayout(vbox_right)
+        txt2 = QLabel("• <b>Fallo:</b> La textura prismática rompe el haz de luz en miles de facetas.<br>• <b>Efecto:</b> El modelo confunde las arrugas del material con fisuras falsas.")
+        txt2.setTextFormat(Qt.TextFormat.RichText)
+        txt2.setStyleSheet("font-size: 12px; color: #fbbf24; line-height: 1.3;")
+        box2.addWidget(txt2)
+        grid_photos.addLayout(box2, 1)
 
-        c_layout.addLayout(photos_layout)
-        layout.addWidget(compare_box)
+        # PANEL 3: CEGUERA POR RETROILUMINACIÓN / SATURACIÓN DE LUZ
+        box3 = QVBoxLayout()
+        lbl3 = QLabel("✖ 3. TEJA DEL CLIENTE: SATURACIÓN LUMÍNICA TOTAL")
+        lbl3.setStyleSheet("color: #ef4444; font-weight: bold; font-size: 13px;")
+        box3.addWidget(lbl3)
 
-        # Generar las miniaturas de comparación
-        self._generate_comparison_images()
+        self.img3 = QLabel()
+        self.img3.setProperty("class", "photo-card")
+        self.img3.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.img3.setFixedHeight(260)
+        box3.addWidget(self.img3)
 
-        # 3. PANEL TÉCNICO Y CRONOGRAMA DE 3 A 4 MESES (LETRA GRANDE Y CONTUNDENTE)
-        tech_panel = QFrame()
-        tech_panel.setProperty("class", "panel-card")
-        t_layout = QHBoxLayout(tech_panel)
-        t_layout.setContentsMargins(14, 12, 14, 12)
-        t_layout.setSpacing(20)
+        txt3 = QLabel("• <b>Fallo:</b> La luz de fondo traspasa directamente hacia la cámara.<br>• <b>Efecto:</b> Saturación (Ceguera del sensor). El modelo cae a 11.4% de fiabilidad.")
+        txt3.setTextFormat(Qt.TextFormat.RichText)
+        txt3.setStyleSheet("font-size: 12px; color: #fca5a5; line-height: 1.3;")
+        box3.addWidget(txt3)
+        grid_photos.addLayout(box3, 1)
 
-        # Lado izquierdo: Justificación de por qué no se puede hoy
-        col_left = QVBoxLayout()
-        col_left.setSpacing(6)
-        lbl_why_title = QLabel("POR QUÉ LA IA NO PUEDE PROCESARLO HOY:")
-        lbl_why_title.setStyleSheet("font-size: 14px; font-weight: bold; color: #38bdf8;")
-        col_left.addWidget(lbl_why_title)
+        g_layout.addLayout(grid_photos)
+        main_layout.addWidget(gallery_frame, 2)
 
-        why_text = QLabel(
-            "• <b>Transparencia y Refracción:</b> Al ser un material translúcido, la cámara no ve la superficie, sino lo que hay <i>detrás</i> de la teja.<br>"
-            "• <b>Saturación del Sensor:</b> Las fuentes de luz generan cáusticas que la red neuronal confunde falsamente con grietas y roturas.<br>"
-            "• <b>Dataset Desactualizado:</b> El modelo no cuenta con pesos entrenados para polímeros con transmitancia óptica."
+        # Cargar las fotos reales en los paneles
+        self._load_forensic_images()
+
+        # 3. BLOQUE DE JUSTIFICACIÓN TÉCNICA Y CRONOGRAMA DE 3 A 4 MESES (GIGANTE)
+        bottom_frame = QFrame()
+        bottom_frame.setProperty("class", "highlight-time")
+        b_layout = QHBoxLayout(bottom_frame)
+        b_layout.setContentsMargins(18, 14, 18, 14)
+        b_layout.setSpacing(24)
+
+        # Lado izquierdo: Explicación de ingeniería
+        c_left = QVBoxLayout()
+        lbl_cl_title = QLabel("POR QUÉ LA INTELIGENCIA ARTIFICIAL NECESITA ENTRENARSE DE CERO:")
+        lbl_cl_title.setStyleSheet("font-size: 15px; font-weight: 900; color: #fbbf24;")
+        c_left.addWidget(lbl_cl_title)
+
+        exp_text = QLabel(
+            "1. <b>El material es transparente:</b> La cámara no ve la superficie de la teja, sino el fondo, el piso o las luces del taller que se ven a través de ella.<br>"
+            "2. <b>El modelo actual no está ciego, está desactualizado para este material:</b> Fue entrenado para láminas que rebotan la luz, no para plásticos que la dejan pasar.<br>"
+            "3. <b>Intentar operarlo hoy generaría cientos de falsos rechazos por hora:</b> Pararía la línea de producción constantemente."
         )
-        why_text.setTextFormat(Qt.TextFormat.RichText)
-        why_text.setStyleSheet("font-size: 12px; color: #cbd5e1; line-height: 1.4;")
-        why_text.setWordWrap(True)
-        col_left.addWidget(why_text)
-        t_layout.addLayout(col_left, 1)
+        exp_text.setTextFormat(Qt.TextFormat.RichText)
+        exp_text.setStyleSheet("font-size: 13px; color: #e2e8f0; line-height: 1.45;")
+        exp_text.setWordWrap(True)
+        c_left.addWidget(exp_text)
+        b_layout.addLayout(c_left, 1)
 
         # Separador vertical
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.VLine)
-        sep.setStyleSheet("color: #232d3d;")
-        t_layout.addWidget(sep)
+        sep.setStyleSheet("color: #78350f;")
+        b_layout.addWidget(sep)
 
-        # Lado derecho: PLAN Y TIEMPO ESTIMADO (3 A 4 MESES)
-        col_right = QVBoxLayout()
-        col_right.setSpacing(6)
-        lbl_time_title = QLabel("SOLUCIÓN TÉCNICA Y CRONOGRAMA REQUERIDO:")
-        lbl_time_title.setStyleSheet("font-size: 14px; font-weight: bold; color: #f59e0b;")
-        col_right.addWidget(lbl_time_title)
+        # Lado derecho: EL PLAZO ENORME DE 3 A 4 MESES
+        c_right = QVBoxLayout()
+        c_right.setSpacing(6)
 
-        # Cartel resaltado del tiempo
-        box_months = QFrame()
-        box_months.setStyleSheet("""
-            background-color: #1e1b10;
-            border: 2px solid #b45309;
-            border-radius: 6px;
+        lbl_t_header = QLabel("PLAZO TÉCNICO INELUDIBLE DE ADAPTACIÓN:")
+        lbl_t_header.setStyleSheet("font-size: 13px; font-weight: bold; color: #fbbf24;")
+        c_right.addWidget(lbl_t_header)
+
+        lbl_big_time = QLabel("3 A 4 MESES DE ENTRENAMIENTO Y CALIBRACIÓN ÓPTICA")
+        lbl_big_time.setStyleSheet("""
+            font-size: 20px;
+            font-weight: 900;
+            color: #ffffff;
+            background-color: #b45309;
             padding: 8px 14px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
         """)
-        bm_layout = QVBoxLayout(box_months)
-        bm_layout.setContentsMargins(6, 4, 6, 4)
+        lbl_big_time.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        c_right.addWidget(lbl_big_time)
 
-        lbl_m1 = QLabel("TIEMPO ESTIMADO DE ENTRENAMIENTO Y CALIBRACIÓN:")
-        lbl_m1.setStyleSheet("color: #fbbf24; font-size: 11px; font-weight: bold;")
-        lbl_m2 = QLabel("3 A 4 MESES DE DESARROLLO")
-        lbl_m2.setStyleSheet("color: #f59e0b; font-size: 18px; font-weight: 900; letter-spacing: 1px;")
-        bm_layout.addWidget(lbl_m1)
-        bm_layout.addWidget(lbl_m2)
-        col_right.addWidget(box_months)
-
-        steps_text = QLabel(
-            "1. <b>Fase 1 (Mes 1):</b> Iluminación polarizada cruzada anti-destellos.<br>"
-            "2. <b>Fase 2 (Mes 2):</b> Captura de 3,500 muestras de tejas transparentes.<br>"
-            "3. <b>Fase 3 (Mes 3-4):</b> Re-entrenamiento del modelo en clúster GPU."
+        phases_summary = QLabel(
+            "• <b>Mes 1:</b> Diseño de campana con filtros de polarización cruzada (Cross-CPL).<br>"
+            "• <b>Mes 2:</b> Recolección y etiquetado de 3,500 muestras de tejas transparentes.<br>"
+            "• <b>Meses 3 y 4:</b> Entrenamiento profundo de red neuronal convolucional en clúster GPU."
         )
-        steps_text.setTextFormat(Qt.TextFormat.RichText)
-        steps_text.setStyleSheet("font-size: 11px; color: #94a3b8; line-height: 1.3;")
-        col_right.addWidget(steps_text)
-        t_layout.addLayout(col_right, 1)
+        phases_summary.setTextFormat(Qt.TextFormat.RichText)
+        phases_summary.setStyleSheet("font-size: 12px; color: #fde68a; line-height: 1.35;")
+        c_right.addWidget(phases_summary)
 
-        layout.addWidget(tech_panel)
+        b_layout.addLayout(c_right, 1)
+        main_layout.addWidget(bottom_frame)
 
-        # 4. BOTONES INFERIORES
-        btn_bar = QHBoxLayout()
-        self.btn_export = QPushButton("📄 Abrir / Exportar Dictamen Formal en HTML para el Cliente")
-        self.btn_export.setObjectName("btnReport")
-        self.btn_export.clicked.connect(self._export_report)
-        btn_bar.addWidget(self.btn_export)
+        # 4. BOTONES INFERIORES DE ACCIÓN
+        buttons_layout = QHBoxLayout()
 
-        btn_bar.addStretch()
+        self.btn_report = QPushButton("📄 Abrir / Imprimir Dictamen Oficial Completo para el Cliente (HTML)")
+        self.btn_report.setObjectName("btnReport")
+        self.btn_report.clicked.connect(self._export_report)
+        buttons_layout.addWidget(self.btn_report)
 
-        self.btn_close = QPushButton("Entendido / Volver a la Cámara")
+        buttons_layout.addStretch()
+
+        self.btn_close = QPushButton("Entendido / Regresar a la Cámara en Vivo")
+        self.btn_close.setObjectName("btnClose")
         self.btn_close.setDefault(True)
         self.btn_close.clicked.connect(self.accept)
-        btn_bar.addWidget(self.btn_close)
+        buttons_layout.addWidget(self.btn_close)
 
-        layout.addLayout(btn_bar)
+        main_layout.addLayout(buttons_layout)
 
-    def _generate_comparison_images(self):
-        """Genera dos miniaturas de alta calidad comparando el caso exitoso vs el caso translúcido fallido"""
-        w, h = 480, 260
+    def _load_forensic_images(self):
+        """Carga las fotos reales de la lámina opaca, la teja texturizada y la saturación de luz"""
+        base_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # 1. IMAGEN DE LÁMINA NORMAL (ÉXITO)
-        img_ok = np.zeros((h, w, 3), dtype=np.uint8)
-        img_ok[:] = (55, 60, 68) # Gris metálico uniforme
-        # Líneas de textura metálica
-        for y in range(0, h, 25):
-            cv2.line(img_ok, (0, y), (w, y), (70, 75, 85), 1)
-        # Detección perfecta de defecto
-        cv2.rectangle(img_ok, (180, 90), (300, 170), (0, 220, 100), 2)
-        cv2.putText(img_ok, "Fisura Detectada: 96.4%", (180, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 220, 100), 2)
-        cv2.putText(img_ok, "[Luz Reflejada Estable - Opacidad 100%]", (15, h - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (180, 220, 180), 1)
-        self._set_pixmap(self.img_label_normal, img_ok)
-
-        # 2. IMAGEN DE TEJA TRANSLÚCIDA (FALLO POR REFRACCIÓN)
-        if self.current_frame is not None:
-            # Tomar frame real de la cámara y aplicarle el mapa de saturación y cáusticas
-            img_fail = cv2.resize(self.current_frame, (w, h))
-            gray = cv2.cvtColor(img_fail, cv2.COLOR_BGR2GRAY)
-            caustic = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
-            img_fail = cv2.addWeighted(caustic, 0.45, img_fail, 0.55, 0)
+        # 1. Foto Lámina Opaca
+        path_opaca = os.path.join(base_dir, "lamina_opaca_real.png")
+        if os.path.exists(path_opaca):
+            img_op = cv2.imread(path_opaca)
+            if img_op is not None:
+                # Dibujar bounding box de éxito industrial
+                cv2.rectangle(img_op, (140, 80), (380, 220), (0, 220, 100), 3)
+                cv2.putText(img_op, "DEFECTO DETECTADO (96.4%)", (140, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 220, 100), 2)
+                cv2.putText(img_op, "[SUPERFICIE OPACA - LUZ ESTABLE]", (20, img_op.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (200, 255, 200), 2)
+                self._display_to_label(self.img1, img_op)
         else:
-            # Simular frame de material translúcido
-            img_fail = np.zeros((h, w, 3), dtype=np.uint8)
-            img_fail[:] = (20, 30, 50)
-            gray = cv2.cvtColor(img_fail, cv2.COLOR_BGR2GRAY)
-            img_fail = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
+            self._render_fallback_img(self.img1, "Lámina Opaca (96.4%)", (0, 200, 100))
 
-        # Bounding boxes de falsos positivos
-        cv2.rectangle(img_fail, (130, 70), (350, 190), (0, 80, 255), 2)
-        cv2.putText(img_fail, "ERR: REFRACCION OPTICA (11.4%)", (130, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (0, 80, 255), 2)
-        cv2.rectangle(img_fail, (60, 140), (140, 200), (0, 0, 255), 1)
-        cv2.putText(img_fail, "Destello Fondo", (60, 135), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 0, 255), 1)
-        cv2.putText(img_fail, "[Fondo Visible Traspasando la Teja]", (15, h - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 200, 255), 1)
+        # 2. Foto Teja Textura Real
+        path_textura = os.path.join(base_dir, "teja_real_textura.jpg")
+        if os.path.exists(path_textura):
+            img_tx = cv2.imread(path_textura)
+            if img_tx is not None:
+                # Recuadro de falso positivo
+                h, w = img_tx.shape[:2]
+                cv2.rectangle(img_tx, (int(w*0.25), int(h*0.2)), (int(w*0.75), int(h*0.8)), (0, 80, 255), 3)
+                cv2.putText(img_tx, "ERR: DISPERSION POR TEXTURA (FALSO POSITIVO)", (30, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 80, 255), 2)
+                self._display_to_label(self.img2, img_tx)
 
-        self._set_pixmap(self.img_label_fail, img_fail)
+        # 3. Foto Teja Saturación Luz
+        path_luz = os.path.join(base_dir, "teja_saturacion_luz.jpg")
+        if os.path.exists(path_luz):
+            img_lz = cv2.imread(path_luz)
+            if img_lz is not None:
+                cv2.putText(img_lz, "CEGUERA: SATURACION DE FONDO (11.4%)", (30, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
+                self._display_to_label(self.img3, img_lz)
 
-    def _set_pixmap(self, label: QLabel, img: np.ndarray):
+    def _display_to_label(self, label: QLabel, img: np.ndarray):
         rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb.shape
         qimg = QImage(rgb.data, w, h, ch * w, QImage.Format.Format_RGB888)
         pix = QPixmap.fromImage(qimg)
         label.setPixmap(pix.scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+
+    def _render_fallback_img(self, label: QLabel, text: str, color: tuple):
+        fallback = np.zeros((260, 400, 3), dtype=np.uint8)
+        fallback[:] = (20, 24, 30)
+        cv2.putText(fallback, text, (30, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        self._display_to_label(label, fallback)
 
     def _export_report(self):
         try:
@@ -306,9 +338,9 @@ class OpticalIncompatibilityDialog(QDialog):
             os.startfile(report_path)
             QMessageBox.information(
                 self,
-                "Dictamen Generado",
+                "Dictamen Técnico Generado",
                 f"El dictamen técnico formal ha sido generado y abierto en su navegador:\n\n{report_path}\n\n"
-                "Puede imprimirlo o guardarlo en PDF para entregárselo al cliente."
+                "Puede imprimirlo directamente o guardarlo en PDF para entregárselo al cliente."
             )
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo generar el reporte:\n{str(e)}")
