@@ -435,8 +435,8 @@ class TransparentInspectionWindow(QMainWindow):
 
             self.statusBar.showMessage("ALERTA INDUSTRIAL EN CURSO (Sirena 10s activa). Presione [Ctrl+X] si desea ver el Dictamen en Ventana.")
         else:
-            # Segundo toque: Abre la ventana de auditoría técnica
-            dialog = OpticalIncompatibilityDialog(self)
+            # Segundo toque: Abre la ventana de auditoría técnica en tamaño grande con comparativa visual
+            dialog = OpticalIncompatibilityDialog(current_frame=self.last_raw_frame, parent=self)
             dialog.exec()
 
     def reset_demo_state(self):
