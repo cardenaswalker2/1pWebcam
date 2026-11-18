@@ -401,9 +401,20 @@ class TransparentInspectionWindow(QMainWindow):
 
     @Slot(str)
     def _on_camera_error(self, err_msg: str):
+        self._stop_camera()
         self.statusBar.showMessage(f"Error de captura: {err_msg}")
         self.lbl_telemetry_status.setText("ESTADO: ERROR DE CONEXIÓN")
         self.lbl_telemetry_status.setStyleSheet("font-weight: bold; color: #ef4444;")
+        QMessageBox.warning(
+            self,
+            "Error de Conexión con Cámara",
+            f"No se pudo conectar al flujo de video:\n{err_msg}\n\n"
+            "Verifica que:\n"
+            "1. La app 'IP Webcam' en tu celular esté iniciada ('Start server').\n"
+            "2. El celular y la PC estén en la misma red Wi-Fi.\n"
+            "3. La IP y puerto coincidan con los que muestra la pantalla del celular (ej. http://192.168.1.X:8080/video).\n\n"
+            "Consejo para pruebas sin celular: Selecciona 'Simulador Sintético' en Dispositivo."
+        )
 
     def trigger_demo_alert(self):
         """
