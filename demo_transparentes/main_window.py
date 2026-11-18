@@ -419,28 +419,25 @@ class TransparentInspectionWindow(QMainWindow):
     def trigger_demo_alert(self):
         """
         Disparado con [Ctrl+X] o [X]:
-        Activa el overlay visual en el video, emite alerta sonora y abre el diálogo formal técnico.
+        - Primer toque: Activa la sirena industrial de 10 segundos y el cartel GIGANTE sobre el video en vivo (sin tapar la pantalla con ventanas).
+        - Segundo toque: Si ya está activa la alerta, abre la ventana formal de auditoría si se desea mostrar el informe detallado.
         """
-        # 1. Beep sutil de advertencia industrial (Windows)
-        try:
-            import winsound
-            winsound.Beep(880, 250) # Tono técnico de 880Hz durante 250ms
-        except Exception:
-            pass
+        if not self.engine.alert_triggered:
+            # 1. Activar sirena de 10 segundos y HUD en video
+            self.engine.trigger_optical_alert()
 
-        # 2. Activar el HUD parpadeante en el motor de video
-        self.engine.trigger_optical_alert()
+            # Si no hay cámara activa, crear un frame sintético para que se aprecie de inmediato
+            if self.last_raw_frame is None:
+                synth = SyntheticSheetSource()
+                frame = synth.read()
+                if frame is not None:
+                    self._on_frame_received(frame)
 
-        # Si no hay cámara activa, crear un frame sintético para que se aprecie de inmediato
-        if self.last_raw_frame is None:
-            synth = SyntheticSheetSource()
-            frame = synth.read()
-            if frame is not None:
-                self._on_frame_received(frame)
-
-        # 3. Abrir la ventana formal de incompatibilidad
-        dialog = OpticalIncompatibilityDialog(self)
-        dialog.exec()
+            self.statusBar.showMessage("ALERTA INDUSTRIAL EN CURSO (Sirena 10s activa). Presione [Ctrl+X] si desea ver el Dictamen en Ventana.")
+        else:
+            # Segundo toque: Abre la ventana de auditoría técnica
+            dialog = OpticalIncompatibilityDialog(self)
+            dialog.exec()
 
     def reset_demo_state(self):
         """Disparado con Ctrl+R para restaurar si se desea continuar demostración normal"""
