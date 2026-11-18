@@ -300,16 +300,23 @@ class OpticalIncompatibilityDialog(QDialog):
         else:
             self._render_fallback_img(self.img1, "Lámina Opaca (96.4%)", (0, 200, 100))
 
-        # 2. Foto Teja Textura Real
-        path_textura = os.path.join(base_dir, "teja_real_textura.jpg")
-        if os.path.exists(path_textura):
-            img_tx = cv2.imread(path_textura)
-            if img_tx is not None:
-                # Recuadro de falso positivo
-                h, w = img_tx.shape[:2]
-                cv2.rectangle(img_tx, (int(w*0.25), int(h*0.2)), (int(w*0.75), int(h*0.8)), (0, 80, 255), 3)
-                cv2.putText(img_tx, "ERR: DISPERSION POR TEXTURA (FALSO POSITIVO)", (30, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 80, 255), 2)
-                self._display_to_label(self.img2, img_tx)
+        # 2. Foto Teja Textura Real / Muestra en Vivo de la Cámara
+        # Si la cámara está conectada y apuntando a la teja del cliente, usamos el fotograma real en vivo
+        if self.current_frame is not None:
+            img_tx = self.current_frame.copy()
+            h, w = img_tx.shape[:2]
+            cv2.rectangle(img_tx, (int(w*0.25), int(h*0.2)), (int(w*0.75), int(h*0.8)), (0, 80, 255), 3)
+            cv2.putText(img_tx, "EN VIVO: DISPERSION Y REFRACCION (FALSO POSITIVO)", (30, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 80, 255), 2)
+            self._display_to_label(self.img2, img_tx)
+        else:
+            path_textura = os.path.join(base_dir, "teja_real_textura.jpg")
+            if os.path.exists(path_textura):
+                img_tx = cv2.imread(path_textura)
+                if img_tx is not None:
+                    h, w = img_tx.shape[:2]
+                    cv2.rectangle(img_tx, (int(w*0.25), int(h*0.2)), (int(w*0.75), int(h*0.8)), (0, 80, 255), 3)
+                    cv2.putText(img_tx, "ERR: DISPERSION POR TEXTURA (FALSO POSITIVO)", (30, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 80, 255), 2)
+                    self._display_to_label(self.img2, img_tx)
 
         # 3. Foto Teja Saturación Luz
         path_luz = os.path.join(base_dir, "teja_saturacion_luz.jpg")
